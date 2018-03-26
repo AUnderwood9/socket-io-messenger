@@ -29,7 +29,7 @@ var server = http.createServer(app);
 // This creates our socket using the instance of the server
 var io = socketIO(server);
 
-// This is what the socket.io syntax is like, we will work this later
+// This is what the socket.io syntax is like
 io.on('connection', function (socket) {
   console.log('User connected');
 
@@ -39,6 +39,11 @@ io.on('connection', function (socket) {
 
   socket.on("chat message", function (currentMessage) {
     console.log("--emitted--", currentMessage);
+
+    var newMessage = "What's happenin'!";
+
+    // socket.emit("relay message", newMessage);
+    socket.emit("relay message", currentMessage);
   });
 });
 

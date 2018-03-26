@@ -21,7 +21,7 @@ const server = http.createServer(app)
 // This creates our socket using the instance of the server
 const io = socketIO(server)
 
-// This is what the socket.io syntax is like, we will work this later
+// This is what the socket.io syntax is like
 io.on('connection', socket => {
   console.log('User connected')
   
@@ -31,7 +31,12 @@ io.on('connection', socket => {
 
   socket.on("chat message", (currentMessage) => {
     console.log("--emitted--", currentMessage);
+
+    let newMessage = "What's happenin'!";
+
+    // socket.emit("relay message", newMessage);
+    socket.emit("relay message", currentMessage);
   })
-})
+});
 
 server.listen(port, () => console.log(`Listening on port ${port}`))

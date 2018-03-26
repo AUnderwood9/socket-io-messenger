@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 37);
+/******/ 	return __webpack_require__(__webpack_require__.s = 38);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -285,6 +285,21 @@ process.umask = function() { return 0; };
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
+/* WEBPACK VAR INJECTION */(function(process) {
+
+if (process.env.NODE_ENV === 'production') {
+  module.exports = __webpack_require__(39);
+} else {
+  module.exports = __webpack_require__(40);
+}
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
 
 
 /**
@@ -323,7 +338,7 @@ emptyFunction.thatReturnsArgument = function (arg) {
 module.exports = emptyFunction;
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
@@ -492,7 +507,7 @@ Emitter.prototype.hasListeners = function(event){
 
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {/**
@@ -500,7 +515,7 @@ Emitter.prototype.hasListeners = function(event){
  */
 
 var keys = __webpack_require__(61);
-var hasBinary = __webpack_require__(27);
+var hasBinary = __webpack_require__(28);
 var sliceBuffer = __webpack_require__(62);
 var after = __webpack_require__(63);
 var utf8 = __webpack_require__(64);
@@ -1103,21 +1118,6 @@ exports.decodePayloadAsBinary = function (data, binaryType, callback) {
 };
 
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
-
-/***/ }),
-/* 5 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-/* WEBPACK VAR INJECTION */(function(process) {
-
-if (process.env.NODE_ENV === 'production') {
-  module.exports = __webpack_require__(38);
-} else {
-  module.exports = __webpack_require__(39);
-}
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
 /* 6 */
@@ -1764,7 +1764,7 @@ module.exports = invariant;
 
 
 
-var emptyFunction = __webpack_require__(2);
+var emptyFunction = __webpack_require__(3);
 
 /**
  * Similar to invariant but only logs a warning if the condition is not met.
@@ -1986,11 +1986,11 @@ function plural(ms, n, name) {
  */
 
 var debug = __webpack_require__(54)('socket.io-parser');
-var Emitter = __webpack_require__(3);
-var hasBin = __webpack_require__(27);
+var Emitter = __webpack_require__(4);
+var hasBin = __webpack_require__(28);
 var binary = __webpack_require__(56);
 var isArray = __webpack_require__(16);
-var isBuf = __webpack_require__(28);
+var isBuf = __webpack_require__(29);
 
 /**
  * Protocol version.
@@ -2453,8 +2453,8 @@ module.exports = function (opts) {
  * Module dependencies.
  */
 
-var parser = __webpack_require__(4);
-var Emitter = __webpack_require__(3);
+var parser = __webpack_require__(5);
+var Emitter = __webpack_require__(4);
 
 /**
  * Module exports.
@@ -2625,7 +2625,7 @@ Transport.prototype.onClose = function () {
 if (process.env.NODE_ENV !== 'production') {
   var invariant = __webpack_require__(12);
   var warning = __webpack_require__(13);
-  var ReactPropTypesSecret = __webpack_require__(40);
+  var ReactPropTypesSecret = __webpack_require__(41);
   var loggedTypeFailures = {};
 }
 
@@ -2730,7 +2730,7 @@ module.exports = ExecutionEnvironment;
  * @typechecks
  */
 
-var emptyFunction = __webpack_require__(2);
+var emptyFunction = __webpack_require__(3);
 
 /**
  * Upstream version of event listener. Does not take into account specific
@@ -2924,7 +2924,7 @@ module.exports = shallowEqual;
  * 
  */
 
-var isTextNode = __webpack_require__(43);
+var isTextNode = __webpack_require__(44);
 
 /*eslint-disable no-bitwise */
 
@@ -2983,6 +2983,106 @@ module.exports = focusNode;
 
 /***/ }),
 /* 26 */
+/***/ (function(module, exports, __webpack_require__) {
+
+
+/**
+ * Module dependencies.
+ */
+
+var url = __webpack_require__(52);
+var parser = __webpack_require__(15);
+var Manager = __webpack_require__(30);
+var debug = __webpack_require__(8)('socket.io-client');
+
+/**
+ * Module exports.
+ */
+
+module.exports = exports = lookup;
+
+/**
+ * Managers cache.
+ */
+
+var cache = exports.managers = {};
+
+/**
+ * Looks up an existing `Manager` for multiplexing.
+ * If the user summons:
+ *
+ *   `io('http://localhost/a');`
+ *   `io('http://localhost/b');`
+ *
+ * We reuse the existing instance based on same scheme/port/host,
+ * and we initialize sockets for each namespace.
+ *
+ * @api public
+ */
+
+function lookup (uri, opts) {
+  if (typeof uri === 'object') {
+    opts = uri;
+    uri = undefined;
+  }
+
+  opts = opts || {};
+
+  var parsed = url(uri);
+  var source = parsed.source;
+  var id = parsed.id;
+  var path = parsed.path;
+  var sameNamespace = cache[id] && path in cache[id].nsps;
+  var newConnection = opts.forceNew || opts['force new connection'] ||
+                      false === opts.multiplex || sameNamespace;
+
+  var io;
+
+  if (newConnection) {
+    debug('ignoring socket cache for %s', source);
+    io = Manager(source, opts);
+  } else {
+    if (!cache[id]) {
+      debug('new io instance for %s', source);
+      cache[id] = Manager(source, opts);
+    }
+    io = cache[id];
+  }
+  if (parsed.query && !opts.query) {
+    opts.query = parsed.query;
+  }
+  return io.socket(parsed.path, opts);
+}
+
+/**
+ * Protocol version.
+ *
+ * @api public
+ */
+
+exports.protocol = parser.protocol;
+
+/**
+ * `connect`.
+ *
+ * @param {String} uri
+ * @api public
+ */
+
+exports.connect = lookup;
+
+/**
+ * Expose constructors for standalone build.
+ *
+ * @api public
+ */
+
+exports.Manager = __webpack_require__(30);
+exports.Socket = __webpack_require__(35);
+
+
+/***/ }),
+/* 27 */
 /***/ (function(module, exports) {
 
 /**
@@ -3027,7 +3127,7 @@ module.exports = function parseuri(str) {
 
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {/* global Blob File */
@@ -3096,7 +3196,7 @@ function hasBinary (obj) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
 /***/ }),
-/* 28 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {
@@ -3116,7 +3216,7 @@ function isBuf(obj) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
 /***/ }),
-/* 29 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
@@ -3125,13 +3225,13 @@ function isBuf(obj) {
  */
 
 var eio = __webpack_require__(57);
-var Socket = __webpack_require__(34);
-var Emitter = __webpack_require__(3);
+var Socket = __webpack_require__(35);
+var Emitter = __webpack_require__(4);
 var parser = __webpack_require__(15);
-var on = __webpack_require__(35);
-var bind = __webpack_require__(36);
+var on = __webpack_require__(36);
+var bind = __webpack_require__(37);
 var debug = __webpack_require__(8)('socket.io-client:manager');
-var indexOf = __webpack_require__(33);
+var indexOf = __webpack_require__(34);
 var Backoff = __webpack_require__(73);
 
 /**
@@ -3695,7 +3795,7 @@ Manager.prototype.onreconnect = function () {
 
 
 /***/ }),
-/* 30 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {/**
@@ -3755,7 +3855,7 @@ function polling (opts) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
 /***/ }),
-/* 31 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -3764,9 +3864,9 @@ function polling (opts) {
 
 var Transport = __webpack_require__(18);
 var parseqs = __webpack_require__(9);
-var parser = __webpack_require__(4);
+var parser = __webpack_require__(5);
 var inherit = __webpack_require__(10);
-var yeast = __webpack_require__(32);
+var yeast = __webpack_require__(33);
 var debug = __webpack_require__(11)('engine.io-client:polling');
 
 /**
@@ -4006,7 +4106,7 @@ Polling.prototype.uri = function () {
 
 
 /***/ }),
-/* 32 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4081,7 +4181,7 @@ module.exports = yeast;
 
 
 /***/ }),
-/* 33 */
+/* 34 */
 /***/ (function(module, exports) {
 
 
@@ -4096,7 +4196,7 @@ module.exports = function(arr, obj){
 };
 
 /***/ }),
-/* 34 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
@@ -4105,10 +4205,10 @@ module.exports = function(arr, obj){
  */
 
 var parser = __webpack_require__(15);
-var Emitter = __webpack_require__(3);
+var Emitter = __webpack_require__(4);
 var toArray = __webpack_require__(72);
-var on = __webpack_require__(35);
-var bind = __webpack_require__(36);
+var on = __webpack_require__(36);
+var bind = __webpack_require__(37);
 var debug = __webpack_require__(8)('socket.io-client:socket');
 var parseqs = __webpack_require__(9);
 
@@ -4520,7 +4620,7 @@ Socket.prototype.compress = function (compress) {
 
 
 /***/ }),
-/* 35 */
+/* 36 */
 /***/ (function(module, exports) {
 
 
@@ -4550,7 +4650,7 @@ function on (obj, ev, fn) {
 
 
 /***/ }),
-/* 36 */
+/* 37 */
 /***/ (function(module, exports) {
 
 /**
@@ -4579,21 +4679,21 @@ module.exports = function(obj, fn){
 
 
 /***/ }),
-/* 37 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var _react = __webpack_require__(5);
+var _react = __webpack_require__(2);
 
 var _react2 = _interopRequireDefault(_react);
 
-var _reactDom = __webpack_require__(41);
+var _reactDom = __webpack_require__(42);
 
 var _reactDom2 = _interopRequireDefault(_reactDom);
 
-var _App = __webpack_require__(50);
+var _App = __webpack_require__(51);
 
 var _App2 = _interopRequireDefault(_App);
 
@@ -4604,7 +4704,7 @@ _reactDom2.default.render(_react2.default.createElement(_App2.default, null), do
 // import App from './components/app';
 
 /***/ }),
-/* 38 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4617,7 +4717,7 @@ _reactDom2.default.render(_react2.default.createElement(_App2.default, null), do
  * LICENSE file in the root directory of this source tree.
  */
 
-var m=__webpack_require__(6),n=__webpack_require__(7),p=__webpack_require__(2),q="function"===typeof Symbol&&Symbol["for"],r=q?Symbol["for"]("react.element"):60103,t=q?Symbol["for"]("react.call"):60104,u=q?Symbol["for"]("react.return"):60105,v=q?Symbol["for"]("react.portal"):60106,w=q?Symbol["for"]("react.fragment"):60107,x="function"===typeof Symbol&&Symbol.iterator;
+var m=__webpack_require__(6),n=__webpack_require__(7),p=__webpack_require__(3),q="function"===typeof Symbol&&Symbol["for"],r=q?Symbol["for"]("react.element"):60103,t=q?Symbol["for"]("react.call"):60104,u=q?Symbol["for"]("react.return"):60105,v=q?Symbol["for"]("react.portal"):60106,w=q?Symbol["for"]("react.fragment"):60107,x="function"===typeof Symbol&&Symbol.iterator;
 function y(a){for(var b=arguments.length-1,e="Minified React error #"+a+"; visit http://facebook.github.io/react/docs/error-decoder.html?invariant\x3d"+a,c=0;c<b;c++)e+="\x26args[]\x3d"+encodeURIComponent(arguments[c+1]);b=Error(e+" for the full message or use the non-minified dev environment for full errors and additional helpful warnings.");b.name="Invariant Violation";b.framesToPop=1;throw b;}
 var z={isMounted:function(){return!1},enqueueForceUpdate:function(){},enqueueReplaceState:function(){},enqueueSetState:function(){}};function A(a,b,e){this.props=a;this.context=b;this.refs=n;this.updater=e||z}A.prototype.isReactComponent={};A.prototype.setState=function(a,b){"object"!==typeof a&&"function"!==typeof a&&null!=a?y("85"):void 0;this.updater.enqueueSetState(this,a,b,"setState")};A.prototype.forceUpdate=function(a){this.updater.enqueueForceUpdate(this,a,"forceUpdate")};
 function B(a,b,e){this.props=a;this.context=b;this.refs=n;this.updater=e||z}function C(){}C.prototype=A.prototype;var D=B.prototype=new C;D.constructor=B;m(D,A.prototype);D.isPureReactComponent=!0;function E(a,b,e){this.props=a;this.context=b;this.refs=n;this.updater=e||z}var F=E.prototype=new C;F.constructor=E;m(F,A.prototype);F.unstable_isAsyncReactComponent=!0;F.render=function(){return this.props.children};var G={current:null},H=Object.prototype.hasOwnProperty,I={key:!0,ref:!0,__self:!0,__source:!0};
@@ -4632,7 +4732,7 @@ isValidElement:K,version:"16.2.0",__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_F
 
 
 /***/ }),
-/* 39 */
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4657,7 +4757,7 @@ var _assign = __webpack_require__(6);
 var emptyObject = __webpack_require__(7);
 var invariant = __webpack_require__(12);
 var warning = __webpack_require__(13);
-var emptyFunction = __webpack_require__(2);
+var emptyFunction = __webpack_require__(3);
 var checkPropTypes = __webpack_require__(19);
 
 // TODO: this is special because it gets imported during build.
@@ -5997,7 +6097,7 @@ module.exports = react;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
-/* 40 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6016,7 +6116,7 @@ module.exports = ReactPropTypesSecret;
 
 
 /***/ }),
-/* 41 */
+/* 42 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6054,15 +6154,15 @@ if (process.env.NODE_ENV === 'production') {
   // DCE check should happen before ReactDOM bundle executes so that
   // DevTools can report bad minification during injection.
   checkDCE();
-  module.exports = __webpack_require__(42);
+  module.exports = __webpack_require__(43);
 } else {
-  module.exports = __webpack_require__(45);
+  module.exports = __webpack_require__(46);
 }
 
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
-/* 42 */
+/* 43 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6078,7 +6178,7 @@ if (process.env.NODE_ENV === 'production') {
 /*
  Modernizr 3.0.0pre (Custom Build) | MIT
 */
-var aa=__webpack_require__(5),l=__webpack_require__(20),B=__webpack_require__(6),C=__webpack_require__(2),ba=__webpack_require__(21),da=__webpack_require__(22),ea=__webpack_require__(23),fa=__webpack_require__(24),ia=__webpack_require__(25),D=__webpack_require__(7);
+var aa=__webpack_require__(2),l=__webpack_require__(20),B=__webpack_require__(6),C=__webpack_require__(3),ba=__webpack_require__(21),da=__webpack_require__(22),ea=__webpack_require__(23),fa=__webpack_require__(24),ia=__webpack_require__(25),D=__webpack_require__(7);
 function E(a){for(var b=arguments.length-1,c="Minified React error #"+a+"; visit http://facebook.github.io/react/docs/error-decoder.html?invariant\x3d"+a,d=0;d<b;d++)c+="\x26args[]\x3d"+encodeURIComponent(arguments[d+1]);b=Error(c+" for the full message or use the non-minified dev environment for full errors and additional helpful warnings.");b.name="Invariant Violation";b.framesToPop=1;throw b;}aa?void 0:E("227");
 var oa={children:!0,dangerouslySetInnerHTML:!0,defaultValue:!0,defaultChecked:!0,innerHTML:!0,suppressContentEditableWarning:!0,suppressHydrationWarning:!0,style:!0};function pa(a,b){return(a&b)===b}
 var ta={MUST_USE_PROPERTY:1,HAS_BOOLEAN_VALUE:4,HAS_NUMERIC_VALUE:8,HAS_POSITIVE_NUMERIC_VALUE:24,HAS_OVERLOADED_BOOLEAN_VALUE:32,HAS_STRING_BOOLEAN_VALUE:64,injectDOMPropertyConfig:function(a){var b=ta,c=a.Properties||{},d=a.DOMAttributeNamespaces||{},e=a.DOMAttributeNames||{};a=a.DOMMutationMethods||{};for(var f in c){ua.hasOwnProperty(f)?E("48",f):void 0;var g=f.toLowerCase(),h=c[f];g={attributeName:g,attributeNamespace:null,propertyName:f,mutationMethod:null,mustUseProperty:pa(h,b.MUST_USE_PROPERTY),
@@ -6298,7 +6398,7 @@ Z.injectIntoDevTools({findFiberByHostInstance:pb,bundleType:0,version:"16.2.0",r
 
 
 /***/ }),
-/* 43 */
+/* 44 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6313,7 +6413,7 @@ Z.injectIntoDevTools({findFiberByHostInstance:pb,bundleType:0,version:"16.2.0",r
  * @typechecks
  */
 
-var isNode = __webpack_require__(44);
+var isNode = __webpack_require__(45);
 
 /**
  * @param {*} object The object to check.
@@ -6326,7 +6426,7 @@ function isTextNode(object) {
 module.exports = isTextNode;
 
 /***/ }),
-/* 44 */
+/* 45 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6354,7 +6454,7 @@ function isNode(object) {
 module.exports = isNode;
 
 /***/ }),
-/* 45 */
+/* 46 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6375,12 +6475,12 @@ if (process.env.NODE_ENV !== "production") {
   (function() {
 'use strict';
 
-var React = __webpack_require__(5);
+var React = __webpack_require__(2);
 var invariant = __webpack_require__(12);
 var warning = __webpack_require__(13);
 var ExecutionEnvironment = __webpack_require__(20);
 var _assign = __webpack_require__(6);
-var emptyFunction = __webpack_require__(2);
+var emptyFunction = __webpack_require__(3);
 var EventListener = __webpack_require__(21);
 var getActiveElement = __webpack_require__(22);
 var shallowEqual = __webpack_require__(23);
@@ -6388,8 +6488,8 @@ var containsNode = __webpack_require__(24);
 var focusNode = __webpack_require__(25);
 var emptyObject = __webpack_require__(7);
 var checkPropTypes = __webpack_require__(19);
-var hyphenateStyleName = __webpack_require__(46);
-var camelizeStyleName = __webpack_require__(48);
+var hyphenateStyleName = __webpack_require__(47);
+var camelizeStyleName = __webpack_require__(49);
 
 /**
  * WARNING: DO NOT manually require this module.
@@ -21756,7 +21856,7 @@ module.exports = reactDom;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
-/* 46 */
+/* 47 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21771,7 +21871,7 @@ module.exports = reactDom;
 
 
 
-var hyphenate = __webpack_require__(47);
+var hyphenate = __webpack_require__(48);
 
 var msPattern = /^ms-/;
 
@@ -21798,7 +21898,7 @@ function hyphenateStyleName(string) {
 module.exports = hyphenateStyleName;
 
 /***/ }),
-/* 47 */
+/* 48 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21834,7 +21934,7 @@ function hyphenate(string) {
 module.exports = hyphenate;
 
 /***/ }),
-/* 48 */
+/* 49 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21849,7 +21949,7 @@ module.exports = hyphenate;
 
 
 
-var camelize = __webpack_require__(49);
+var camelize = __webpack_require__(50);
 
 var msPattern = /^-ms-/;
 
@@ -21877,7 +21977,7 @@ function camelizeStyleName(string) {
 module.exports = camelizeStyleName;
 
 /***/ }),
-/* 49 */
+/* 50 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21912,7 +22012,7 @@ function camelize(string) {
 module.exports = camelize;
 
 /***/ }),
-/* 50 */
+/* 51 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21924,15 +22024,15 @@ Object.defineProperty(exports, "__esModule", {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _react = __webpack_require__(5);
+var _react = __webpack_require__(2);
 
 var _react2 = _interopRequireDefault(_react);
 
-var _socket = __webpack_require__(51);
+var _socket = __webpack_require__(26);
 
 var _socket2 = _interopRequireDefault(_socket);
 
-var _MessagePage = __webpack_require__(75);
+var _MessagePage = __webpack_require__(74);
 
 var _MessagePage2 = _interopRequireDefault(_MessagePage);
 
@@ -21951,20 +22051,64 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var App = function (_Component) {
     _inherits(App, _Component);
 
-    function App() {
+    function App(props) {
         _classCallCheck(this, App);
 
-        return _possibleConstructorReturn(this, (App.__proto__ || Object.getPrototypeOf(App)).apply(this, arguments));
+        var _this = _possibleConstructorReturn(this, (App.__proto__ || Object.getPrototypeOf(App)).call(this, props));
+
+        _this.typeHandler = function (event) {
+            var message = event.target.value;
+            console.log("--typed--", message);
+            _this.setState({ message: message });
+            console.log("--state--", _this.state.message);
+        };
+
+        _this.clickHandler = function (event) {
+            event.preventDefault();
+            // console.log(event.val);
+            console.log("--Click--", _this.state.message);
+
+            _this.socket.emit("chat message", _this.state.message);
+        };
+
+        _this.state = {
+            message: "",
+            sessionMessages: []
+
+            // this.socket = socketIOClient("http://localhost:4002");
+            // console.log(this.socket);
+            // let sessionMessages = this.state.sessionMessages;
+            // this.socket.on("relay message", (newMessage) => {
+            //     console.log("--relay--", newMessage);
+            //     sessionMessages.push(newMessage);
+            //     this.setState({ sessionMessages });
+            // });
+
+        };return _this;
     }
 
     _createClass(App, [{
+        key: 'componentDidMount',
+        value: function componentDidMount() {
+            var _this2 = this;
+
+            this.socket = (0, _socket2.default)("localhost:4001");
+            console.log(this.socket);
+            var sessionMessages = this.state.sessionMessages;
+            this.socket.on("relay message", function (newMessage) {
+                console.log("--relay--", newMessage);
+                sessionMessages.push(newMessage);
+                _this2.setState({ sessionMessages: sessionMessages });
+            });
+        }
+    }, {
         key: 'render',
         value: function render() {
 
             return _react2.default.createElement(
                 'div',
                 null,
-                _react2.default.createElement(_MessagePage2.default, null)
+                _react2.default.createElement(_MessagePage2.default, { typeHandler: this.typeHandler, clickHandler: this.clickHandler, messageContent: this.state.sessionMessages })
             );
         }
     }]);
@@ -21975,106 +22119,6 @@ var App = function (_Component) {
 exports.default = App;
 
 /***/ }),
-/* 51 */
-/***/ (function(module, exports, __webpack_require__) {
-
-
-/**
- * Module dependencies.
- */
-
-var url = __webpack_require__(52);
-var parser = __webpack_require__(15);
-var Manager = __webpack_require__(29);
-var debug = __webpack_require__(8)('socket.io-client');
-
-/**
- * Module exports.
- */
-
-module.exports = exports = lookup;
-
-/**
- * Managers cache.
- */
-
-var cache = exports.managers = {};
-
-/**
- * Looks up an existing `Manager` for multiplexing.
- * If the user summons:
- *
- *   `io('http://localhost/a');`
- *   `io('http://localhost/b');`
- *
- * We reuse the existing instance based on same scheme/port/host,
- * and we initialize sockets for each namespace.
- *
- * @api public
- */
-
-function lookup (uri, opts) {
-  if (typeof uri === 'object') {
-    opts = uri;
-    uri = undefined;
-  }
-
-  opts = opts || {};
-
-  var parsed = url(uri);
-  var source = parsed.source;
-  var id = parsed.id;
-  var path = parsed.path;
-  var sameNamespace = cache[id] && path in cache[id].nsps;
-  var newConnection = opts.forceNew || opts['force new connection'] ||
-                      false === opts.multiplex || sameNamespace;
-
-  var io;
-
-  if (newConnection) {
-    debug('ignoring socket cache for %s', source);
-    io = Manager(source, opts);
-  } else {
-    if (!cache[id]) {
-      debug('new io instance for %s', source);
-      cache[id] = Manager(source, opts);
-    }
-    io = cache[id];
-  }
-  if (parsed.query && !opts.query) {
-    opts.query = parsed.query;
-  }
-  return io.socket(parsed.path, opts);
-}
-
-/**
- * Protocol version.
- *
- * @api public
- */
-
-exports.protocol = parser.protocol;
-
-/**
- * `connect`.
- *
- * @param {String} uri
- * @api public
- */
-
-exports.connect = lookup;
-
-/**
- * Expose constructors for standalone build.
- *
- * @api public
- */
-
-exports.Manager = __webpack_require__(29);
-exports.Socket = __webpack_require__(34);
-
-
-/***/ }),
 /* 52 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -22083,7 +22127,7 @@ exports.Socket = __webpack_require__(34);
  * Module dependencies.
  */
 
-var parseuri = __webpack_require__(26);
+var parseuri = __webpack_require__(27);
 var debug = __webpack_require__(8)('socket.io-client:url');
 
 /**
@@ -22808,7 +22852,7 @@ function coerce(val) {
  */
 
 var isArray = __webpack_require__(16);
-var isBuf = __webpack_require__(28);
+var isBuf = __webpack_require__(29);
 var toString = Object.prototype.toString;
 var withNativeBlob = typeof global.Blob === 'function' || toString.call(global.Blob) === '[object BlobConstructor]';
 var withNativeFile = typeof global.File === 'function' || toString.call(global.File) === '[object FileConstructor]';
@@ -22958,7 +23002,7 @@ module.exports = __webpack_require__(58);
  * @api public
  *
  */
-module.exports.parser = __webpack_require__(4);
+module.exports.parser = __webpack_require__(5);
 
 
 /***/ }),
@@ -22969,12 +23013,12 @@ module.exports.parser = __webpack_require__(4);
  * Module dependencies.
  */
 
-var transports = __webpack_require__(30);
-var Emitter = __webpack_require__(3);
+var transports = __webpack_require__(31);
+var Emitter = __webpack_require__(4);
 var debug = __webpack_require__(11)('engine.io-client:socket');
-var index = __webpack_require__(33);
-var parser = __webpack_require__(4);
-var parseuri = __webpack_require__(26);
+var index = __webpack_require__(34);
+var parser = __webpack_require__(5);
+var parseuri = __webpack_require__(27);
 var parseqs = __webpack_require__(9);
 
 /**
@@ -23109,8 +23153,8 @@ Socket.protocol = parser.protocol; // this is an int
 
 Socket.Socket = Socket;
 Socket.Transport = __webpack_require__(18);
-Socket.transports = __webpack_require__(30);
-Socket.parser = __webpack_require__(4);
+Socket.transports = __webpack_require__(31);
+Socket.parser = __webpack_require__(5);
 
 /**
  * Creates transport of the given type.
@@ -23743,8 +23787,8 @@ try {
  */
 
 var XMLHttpRequest = __webpack_require__(17);
-var Polling = __webpack_require__(31);
-var Emitter = __webpack_require__(3);
+var Polling = __webpack_require__(32);
+var Emitter = __webpack_require__(4);
 var inherit = __webpack_require__(10);
 var debug = __webpack_require__(11)('engine.io-client:polling-xhr');
 
@@ -24952,7 +24996,7 @@ function coerce(val) {
  * Module requirements.
  */
 
-var Polling = __webpack_require__(31);
+var Polling = __webpack_require__(32);
 var inherit = __webpack_require__(10);
 
 /**
@@ -25190,10 +25234,10 @@ JSONPPolling.prototype.doWrite = function (data, fn) {
  */
 
 var Transport = __webpack_require__(18);
-var parser = __webpack_require__(4);
+var parser = __webpack_require__(5);
 var parseqs = __webpack_require__(9);
 var inherit = __webpack_require__(10);
-var yeast = __webpack_require__(32);
+var yeast = __webpack_require__(33);
 var debug = __webpack_require__(11)('engine.io-client:websocket');
 var BrowserWebSocket = global.WebSocket || global.MozWebSocket;
 var NodeWebSocket;
@@ -25601,44 +25645,17 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
-var _react = __webpack_require__(5);
-
-var _react2 = _interopRequireDefault(_react);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function Message(props) {
-    return _react2.default.createElement(
-        "li",
-        null,
-        props.currentMessage
-    );
-}
-
-exports.default = Message;
-
-/***/ }),
-/* 75 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _react = __webpack_require__(5);
+var _react = __webpack_require__(2);
 
 var _react2 = _interopRequireDefault(_react);
 
-var _socket = __webpack_require__(51);
+var _socket = __webpack_require__(26);
 
 var _socket2 = _interopRequireDefault(_socket);
 
-var _Message = __webpack_require__(74);
+var _Message = __webpack_require__(75);
 
 var _Message2 = _interopRequireDefault(_Message);
 
@@ -25656,51 +25673,69 @@ var MessagePage = function (_Component) {
     function MessagePage(props) {
         _classCallCheck(this, MessagePage);
 
-        var _this = _possibleConstructorReturn(this, (MessagePage.__proto__ || Object.getPrototypeOf(MessagePage)).call(this, props));
-
-        _this.typeHandler = function (event) {
-            var message = event.target.value;
-            console.log("--typed--", message);
-            _this.setState({ message: message });
-            console.log("--state--", _this.state.message);
-        };
-
-        _this.clickHandler = function (event) {
-            event.preventDefault();
-            // console.log(event.val);
-            console.log("--Click--", _this.state.message);
-
-            _this.socket.emit("chat message", _this.state.message);
-        };
-
-        _this.state = {
-            message: "",
-            sessionMessages: []
-        };
-
-        _this.socket = (0, _socket2.default)();
-
-        return _this;
+        return _possibleConstructorReturn(this, (MessagePage.__proto__ || Object.getPrototypeOf(MessagePage)).call(this, props));
     }
+    // constructor(props) {
+    //     super(props)
+
+    //     this.state = {
+    //         message: "",
+    //         sessionMessages: []
+    //     }
+
+    //     this.socket = socketIOClient();
+
+    // }
+
+    // componentDidMount(){
+    //     let sessionMessages = this.state.sessionMessages;
+    //     this.socket.on("relay message", (newMessage) => {
+    //         console.log("--relay--", newMessage);
+    //         sessionMessages.push(newMessage);
+    //         this.setState({ sessionMessages });
+    //     });
+    // }
+
+    // typeHandler = (event) => {
+    //     let message = event.target.value
+    //     console.log("--typed--", message);
+    //     this.setState({message});
+    //     console.log("--state--", this.state.message);
+    // }
+
+    // clickHandler = (event) => {
+    //     event.preventDefault();
+    //     // console.log(event.val);
+    //     console.log("--Click--", this.state.message);
+
+    //     this.socket.emit("chat message", this.state.message);
+    // }
+
+    // render() {
+    //     // console.log("--Current Session messages--", this.state.sessionMessages);
+    //     return (
+    //         <div>
+    //             <ul id="messages">
+    //             Stuff
+    //                 {/* <MessagePiece /> */}
+    //                 {
+    //                     this.state.sessionMessages.map((item, index) => {
+    //                         return <MessagePiece key={`message-piece-${index}`} currentMessage={item}/>
+    //                     })
+    //                 }
+    //             </ul>
+    //             <form action="">
+    //                 <input id="input" autoComplete="off" onChange={(event) => {this.typeHandler(event)}} /><button onClick={(event) => {this.clickHandler(event)}}>Send</button>
+    //             </form>
+    //         </div>
+    //     )
+    // }
 
     _createClass(MessagePage, [{
-        key: "componentDidMount",
-        value: function componentDidMount() {
-            var _this2 = this;
-
-            var sessionMessages = this.state.sessionMessages;
-            this.socket.on("relay message", function (newMessage) {
-                console.log("--relay--", newMessage);
-                sessionMessages.push(newMessage);
-                _this2.setState({ sessionMessages: sessionMessages });
-            });
-        }
-    }, {
         key: "render",
         value: function render() {
-            var _this3 = this;
+            var _this2 = this;
 
-            // console.log("--Current Session messages--", this.state.sessionMessages);
             return _react2.default.createElement(
                 "div",
                 null,
@@ -25708,7 +25743,7 @@ var MessagePage = function (_Component) {
                     "ul",
                     { id: "messages" },
                     "Stuff",
-                    this.state.sessionMessages.map(function (item, index) {
+                    this.props.messageContent.map(function (item, index) {
                         return _react2.default.createElement(_Message2.default, { key: "message-piece-" + index, currentMessage: item });
                     })
                 ),
@@ -25716,12 +25751,12 @@ var MessagePage = function (_Component) {
                     "form",
                     { action: "" },
                     _react2.default.createElement("input", { id: "input", autoComplete: "off", onChange: function onChange(event) {
-                            _this3.typeHandler(event);
+                            _this2.props.typeHandler(event);
                         } }),
                     _react2.default.createElement(
                         "button",
                         { onClick: function onClick(event) {
-                                _this3.clickHandler(event);
+                                _this2.props.clickHandler(event);
                             } },
                         "Send"
                     )
@@ -25734,6 +25769,33 @@ var MessagePage = function (_Component) {
 }(_react.Component);
 
 exports.default = MessagePage;
+
+/***/ }),
+/* 75 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _react = __webpack_require__(2);
+
+var _react2 = _interopRequireDefault(_react);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function Message(props) {
+    return _react2.default.createElement(
+        "li",
+        null,
+        props.currentMessage
+    );
+}
+
+exports.default = Message;
 
 /***/ })
 /******/ ]);

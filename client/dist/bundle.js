@@ -4593,14 +4593,15 @@ var _reactDom = __webpack_require__(41);
 
 var _reactDom2 = _interopRequireDefault(_reactDom);
 
-var _app = __webpack_require__(50);
+var _App = __webpack_require__(74);
 
-var _app2 = _interopRequireDefault(_app);
+var _App2 = _interopRequireDefault(_App);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-_reactDom2.default.render(_react2.default.createElement(_app2.default, null), document.getElementById('root'));
+_reactDom2.default.render(_react2.default.createElement(_App2.default, null), document.getElementById('root'));
 // import "./index.css";
+// import App from './components/app';
 
 /***/ }),
 /* 38 */
@@ -21911,125 +21912,7 @@ function camelize(string) {
 module.exports = camelize;
 
 /***/ }),
-/* 50 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _react = __webpack_require__(5);
-
-var _react2 = _interopRequireDefault(_react);
-
-var _socket = __webpack_require__(51);
-
-var _socket2 = _interopRequireDefault(_socket);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } // import packages
-
-
-// Making the App component
-var App = function (_Component) {
-  _inherits(App, _Component);
-
-  function App() {
-    _classCallCheck(this, App);
-
-    var _this = _possibleConstructorReturn(this, (App.__proto__ || Object.getPrototypeOf(App)).call(this));
-
-    _this.send = function () {
-      var socket = (0, _socket2.default)(_this.state.endpoint);
-
-      // this emits an event to the socket (your server) with an argument of 'red'
-      // you can make the argument any color you would like, or any kind of data you want to send.
-
-      console.log("--before emit--", _this.state.color);
-      socket.emit('change color', _this.state.color); // change "red" to the state's color 
-      // socket.emit('change color', 'red', 'yellow') | you can have multiple arguments
-    };
-
-    _this.setColor = function (color) {
-      console.log("--Setting--", color);
-      _this.setState({ color: color });
-    };
-
-    _this.state = {
-      endpoint: "http://localhost:4001", // this is where we are connecting to with sockets
-      color: "white"
-    };
-    return _this;
-  }
-
-  // method for emitting a socket.io event
-
-
-  _createClass(App, [{
-    key: 'render',
-
-
-    // render method that renders in code if the state is updated
-    value: function render() {
-      var _this2 = this;
-
-      // Within the render method, we will be checking for any sockets.
-      // We do it in the render method because it is ran very often. 
-      var socket = (0, _socket2.default)(this.state.endpoint);
-
-      // socket.on is another method that checks for incoming events from the server
-      // This method is looking for the event 'change color'
-      // socket.on takes a callback function for the first argument
-      socket.on('change color', function (color) {
-        console.log("--emitting--", color);
-        // setting the color of our button
-        document.body.style.backgroundColor = color;
-      });
-
-      return _react2.default.createElement(
-        'div',
-        null,
-        _react2.default.createElement(
-          'button',
-          { onClick: function onClick() {
-              _this2.send();
-            } },
-          'Change Color'
-        ),
-        _react2.default.createElement(
-          'button',
-          { id: 'blue', onClick: function onClick() {
-              return _this2.setColor('blue');
-            } },
-          'Blue'
-        ),
-        _react2.default.createElement(
-          'button',
-          { id: 'red', onClick: function onClick() {
-              return _this2.setColor('red');
-            } },
-          'Red'
-        )
-      );
-    }
-  }]);
-
-  return App;
-}(_react.Component);
-
-exports.default = App;
-
-/***/ }),
+/* 50 */,
 /* 51 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -25644,6 +25527,102 @@ Backoff.prototype.setJitter = function(jitter){
 };
 
 
+
+/***/ }),
+/* 74 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _react = __webpack_require__(5);
+
+var _react2 = _interopRequireDefault(_react);
+
+var _socket = __webpack_require__(51);
+
+var _socket2 = _interopRequireDefault(_socket);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } // import packages
+
+
+// import "../index.css";
+
+// Making the App component
+var App = function (_Component) {
+    _inherits(App, _Component);
+
+    function App() {
+        _classCallCheck(this, App);
+
+        var _this = _possibleConstructorReturn(this, (App.__proto__ || Object.getPrototypeOf(App)).call(this));
+
+        _this.typeHandler = function (event) {
+            var message = event.target.value;
+            console.log("--typed--", message);
+            _this.setState({ message: message });
+            console.log("--state--", _this.state.message);
+        };
+
+        _this.clickHandler = function (event) {
+            event.preventDefault();
+            // console.log(event.val);
+            console.log("--Click--", _this.state.message);
+
+            var socket = (0, _socket2.default)();
+            socket.emit("chat message", _this.state.message);
+        };
+
+        _this.state = {
+            message: ""
+        };
+
+        return _this;
+    }
+
+    _createClass(App, [{
+        key: 'render',
+        value: function render() {
+            var _this2 = this;
+
+            return _react2.default.createElement(
+                'div',
+                null,
+                _react2.default.createElement('ul', { id: 'messages' }),
+                _react2.default.createElement(
+                    'form',
+                    { action: '' },
+                    _react2.default.createElement('input', { id: 'input', autoComplete: 'off', onChange: function onChange(event) {
+                            _this2.typeHandler(event);
+                        } }),
+                    _react2.default.createElement(
+                        'button',
+                        { onClick: function onClick(event) {
+                                _this2.clickHandler(event);
+                            } },
+                        'Send'
+                    )
+                )
+            );
+        }
+    }]);
+
+    return App;
+}(_react.Component);
+
+exports.default = App;
 
 /***/ })
 /******/ ]);

@@ -21,6 +21,8 @@ var app = express();
 
 app.use(_routing2.default);
 
+app.use(express.static(CLIENT_PATH));
+
 // our server instance
 var server = http.createServer(app);
 
@@ -34,9 +36,11 @@ io.on('connection', function (socket) {
   socket.on('disconnect', function () {
     console.log('user disconnected');
   });
-});
 
-app.use(express.static(CLIENT_PATH));
+  socket.on("chat message", function (currentMessage) {
+    console.log("--emitted--", currentMessage);
+  });
+});
 
 server.listen(port, function () {
   return console.log('Listening on port ' + port);

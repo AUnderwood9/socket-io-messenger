@@ -10,7 +10,7 @@
     "build:client": "webpack",
     "build:server": "babel ./server/src -d ./server/lib",
     "dev": "nodemon --watch server/src --exec \"npm run watch:client && npm run babel && npm run start:server\"",
-    "dev:new" : "concurrently -k \"npm run watch:client\" \"npm run watch:server\" \"nodemon --watch server/lib/ --delay 1\"",
+    "dev:new": "concurrently -k \"npm run watch:client\" \"npm run watch:server\" \"nodemon --watch server/lib/ --delay 1\"",
     "prepare": "npm run build:server",
     "start:dev": "npm run build:client && npm run build:server && npm run start:server",
     "start:server": "node server/lib/index.js",

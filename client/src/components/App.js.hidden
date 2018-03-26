@@ -20,7 +20,9 @@ class App extends Component {
     // you can make the argument any color you would like, or any kind of data you want to send.
     
     console.log("--before emit--", this.state.color);
-    socket.emit('change color', this.state.color) // change "red" to the state's color 
+    socket.emit('change color', this.state.color, () => {
+      console.log("--emitting--");
+    }) // change "red" to the state's color 
     // socket.emit('change color', 'red', 'yellow') | you can have multiple arguments
   }
 

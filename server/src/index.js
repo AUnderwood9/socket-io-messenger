@@ -13,6 +13,8 @@ const app = express();
 
 app.use(stateRouting);
 
+app.use(express.static(CLIENT_PATH));
+
 // our server instance
 const server = http.createServer(app)
 
@@ -26,8 +28,10 @@ io.on('connection', socket => {
   socket.on('disconnect', () => {
     console.log('user disconnected')
   })
-})
 
-app.use(express.static(CLIENT_PATH));
+  socket.on("chat message", (currentMessage) => {
+    console.log("--emitted--", currentMessage);
+  })
+})
 
 server.listen(port, () => console.log(`Listening on port ${port}`))

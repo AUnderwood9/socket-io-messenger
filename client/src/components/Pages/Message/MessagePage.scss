@@ -1,0 +1,17 @@
+$primary-border-color: rgba(black, 0.5);
+$secondary-border-color: rgba(black, 0.2);
+
+.boxContainer{
+    padding: 3em;
+    border: 0.15em solid $primary-border-color;
+    border-radius: 2em;
+
+    ul{
+        padding: 3em;
+        border: 0.15em solid $secondary-border-color;
+        list-style-type: none;
+    }
+    form{
+        text-align: center;
+    }
+}

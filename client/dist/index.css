@@ -1,0 +1,10 @@
+.boxContainer {
+  padding: 3em;
+  border: 0.15em solid rgba(0, 0, 0, 0.5);
+  border-radius: 2em; }
+  .boxContainer ul {
+    padding: 3em;
+    border: 0.15em solid rgba(0, 0, 0, 0.2);
+    list-style-type: none; }
+  .boxContainer form {
+    text-align: center; }

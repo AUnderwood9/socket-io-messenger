@@ -3,25 +3,22 @@ import socketIOClient from 'socket.io-client';
 import MessagePiece from "../../Pieces/Message";
 // import ChatBoxStyle from "./MessagePage.scss";
 
-class MessagePage extends Component {
-    constructor(props) {
-        super(props);
-    }
+function MessagePage (props) {
 
-    render() {
         return (
 
             <ul id="messages">
                 {/* <MessagePiece /> */}
                 {
-                    this.props.messageContent.map((item, index) => {
-                        return <MessagePiece key={`message-piece-${index}`} currentMessage={item} />
+                    props.messageContent.map((item, index) => {
+                        // return <MessagePiece key={`message-piece-${index}`} currentMessage={item} />
+                        return <li key={`li-${props.boxId}-${index}`}>{item}</li>
                     })
                 }
             </ul>
 
-        );
-    }
+        )
+
 }
 
 export default MessagePage;

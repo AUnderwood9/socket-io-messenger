@@ -14,50 +14,43 @@ class LiveChatBox extends Component {
     constructor(props) {
         super(props)
 
+        // sessionMessages = [];
+        // sessionMessages.push(this.props.sessionMsg);
+
+        console.log("--Creating Box--", this.props.sessionUser);
+
         this.state = {
             message: "",
-            sessionMessages: [],
-            user: "",
-            userTo: "",
+            sessionMessages: [this.props.sessionMsg],
+            user: this.props.sessionUser,
+            userTo: this.props.sessionUserTo,
             userList: []
         }
 
-        this.socket = socketIOClient("localhost:3001");
+        this.socket = this.props.chatListener;
 
     }
 
-    componentDidMount() {
+    componentDidMount(){
+        const type = "Comopnent did mount";
+        this.initSocketListner(type);
+    }
 
-        // Set socket listener here
-        // this.socket = socketIOClient("localhost:4001");
-        // // console.log(this.socket);
-        // let sessionMessages = this.state.sessionMessages;
-        // this.socket.on("relay message", (newMessage) => {
-        //     const userTo = this.state.userTo;
 
-        //     const currentUser = getExistingElement(userTo, this.state.userList);
+    initSocketListner = (creator = "none") => {
+        console.log("Socket init")
+        this.socket.on(`new-chat-to-${this.state.userName}`, (sessionRelayObj) => {
 
-        //     console.log("--current user--", currentUser);
+            console.log("--Relayed in chat Box--", sessionRelayObj,  "Creator: ", creator);
+            
+            // this.setState({ sessionMessages: [...this.state.sessionMessages, sessionRelayObj.msg] })
+            this.updateMessages(sessionRelayObj.msg);
+            
+        })
+    }
 
-        //     if (!currentUser) {
-        //         let userList = this.state.userList;
-        //         userList.push(userTo);
-
-        //         this.setState({ userList });
-        //     }
-
-        //     console.log("--relay--", newMessage);
-        //     sessionMessages.push(newMessage.message);
-        //     this.setState({ sessionMessages });
-
-        //     console.log("--state list--", this.state.userList);
-        // });
-
-        if(this.props.sessionUser){
-            console.log("You recieved a message");
-        } else {
-            console.log("You are sending message")
-        }
+    updateMessages = (msg) => {
+        this.setState({ sessionMessages: [...this.state.sessionMessages, msg] })
     }
 
     userTypeHandler = (event) => {
@@ -89,32 +82,25 @@ class LiveChatBox extends Component {
 
     clickHandler = (event) => {
         event.preventDefault();
-        // const user = this.state.user;
 
-        // const currentUser = getExistingElement(user, this.state.userList);
+        // const commentObj = { message: this.state.message, user: this.state.user, userTo: this.state.userTo };
+        // console.log("--Click--", commentObj);
 
-        // if(!currentUser){
-        //     let userList = this.state.userList;
-        //     userList.push(user);
+        // this.socket.emit("chat message", commentObj);
 
-        //     this.setState({ userList });
-        // }
+        const sessionObj = { userFrom: this.state.user, userTo: this.state.userTo, msg: this.state.message };
+        console.log("--Click--", sessionObj);
 
-        const commentObj = { message: this.state.message, user: this.state.user, userTo: this.state.userTo };
-        console.log("--Click--", commentObj);
-
-        this.socket.emit("chat message", commentObj);
+        this.socket.emit("send message", sessionObj);
     }
 
     render() {
-        // console.log("--state list--", this.state.userList);
-
+        console.log("Rendering");
         return (
             <Fragment>
                 <div className={`${ChatBoxStyle.boxContainer}`}>
-                    <MessageBox commentTypeHandler={this.commentTypeHandler} userTypeHandler={this.userTypeHandler} clickHandler={this.clickHandler} messageContent={this.state.sessionMessages} />
-                    {/* <MessageInputs commentTypeHandler={this.commentTypeHandler} userTypeHandler={this.userTypeHandler} clickHandler={this.clickHandler} /> */}
-                    <MessageInputs commentTypeHandler={this.commentTypeHandler} userTypeHandler={this.userTypeHandler} clickHandler={this.clickHandler} /> 
+                    <MessageBox messageContent={this.state.sessionMessages} boxId={`${this.state.user}-${this.state.userTo}`} />
+                    <MessageInputs commentTypeHandler={this.commentTypeHandler} userTypeHandler={this.userTypeHandler} clickHandler={this.clickHandler} />
                 </div>
             </Fragment>
         )

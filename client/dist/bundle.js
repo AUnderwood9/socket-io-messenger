@@ -4699,8 +4699,14 @@ var getExistingElement = function getExistingElement(elementToFind, arrToSearch)
     return arrToSearch == null ? undefined : arrToSearch[arrToSearch.indexOf(elementToFind)];
 };
 
+var isUndefined = function isUndefined(varToCheck) {
+    console.log("--is undefined--");
+    return varToCheck == undefined ? true : false;
+};
+
 module.exports = {
-    getExistingElement: getExistingElement
+    getExistingElement: getExistingElement,
+    isUndefined: isUndefined
 };
 
 /***/ }),
@@ -25702,6 +25708,8 @@ var _myUtilities = __webpack_require__(38);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
@@ -25743,40 +25751,63 @@ var LiveChatContainer = function (_Component) {
 
             chatBoxRenders.push("SetUserTo");
 
-            _this.socket = (0, _socket2.default)("localhost:3001");
-
-            _this.socket.emit("join", _this.state.userName);
-
             _this.setState({
                 chatBoxRenders: chatBoxRenders,
-                joinChat: !_this.state.joinChat,
-                chatRoom: (0, _socket2.default)("localhost:3001/" + _this.state.userName + "-room")
+                chatListener: _this.socket.on("chat-to-" + _this.state.userName, function (sessionRelayObj) {
+
+                    console.log("--Relayed--", sessionRelayObj);
+
+                    // If a chat for this session hasn't been opened. Open a new one.
+                    if (sessionRelayObj.openChat) {
+                        // const messageRecievedComponent = <LiveChatBox sessionUser={this.state.userName} sessionUserTo={null} sessionObj={sessionRelayObj}/>
+                        if ((0, _myUtilities.isUndefined)((0, _myUtilities.getExistingElement)(sessionRelayObj.userFrom))) {
+                            console.log("--creating new message box--", _this.socket);
+                            var messageRecievedComponent = _react2.default.createElement(_LiveChatBox2.default, { sessionUser: _this.state.userName, sessionUserTo: sessionRelayObj.userFrom, sessionMsg: sessionRelayObj.msg, chatListener: _this.socket });
+
+                            _this.setState({
+                                messageRecievedComponent: messageRecievedComponent,
+                                chatList: _this.state.chatList ? [].concat(_toConsumableArray(_this.state.chatList), [sessionRelayObj.userFrom]) : [sessionRelayObj.userFrom]
+                            });
+                        }
+                    } else {
+                        console.log("--Sending pm--");
+                        // socketIOClient.emit(`chat-to-${chatObj.userTo}`, sessionRelayObj);
+                        // socketIOClient.emit("private message", sessionRelayObj)
+                        _this.socket.emit("private message", sessionRelayObj);
+                    }
+
+                    // this.state.chatListener.removeAllListeners(`chat-to-${this.state.userName}`);
+                })
             });
         };
 
         _this.userToClickHandler = function (event) {
             event.preventDefault();
 
-            var sessionObj = { userName: _this.state.userName, userTo: _this.state.userTo };
-            console.log("--Click--", sessionObj);
+            // const sessionObj = { userName: this.state.userName, userTo: this.state.userTo };
+            // console.log("--Click--", sessionObj);
 
-            _this.socket.emit("chat activation", sessionObj);
+            // this.socket.emit("send message", sessionObj);
+
+            // console.log("--Chat List State--", this.state.chatList);
+            // let chatList = this.state.chatList;
+            // console.log(chatList);
+            // chatList.push(sessionRelayObj.userFrom);
 
             var chatBoxRenders = _this.state.chatBoxRenders;
             chatBoxRenders.splice("SetUser", 1);
             chatBoxRenders.push("LiveChatBox");
 
-            _this.setState({ chatBoxRenders: chatBoxRenders });
+            _this.setState({ chatBoxRenders: chatBoxRenders, chatList: [].concat(_toConsumableArray(_this.state.chatlist), [_this.state.userFrom]) });
         };
 
         _this.state = {
             userName: "",
             userTo: "",
-            userTolist: [],
-            chatId: "",
+            chatlist: [],
             chatBoxRenders: ["SetUser"],
-            joinChat: false,
-            chatRoom: ""
+            messageRecievedComponent: null,
+            chatListener: null
 
             // Create the main socket
         };_this.socket = (0, _socket2.default)("localhost:3001");
@@ -25786,26 +25817,18 @@ var LiveChatContainer = function (_Component) {
     _createClass(LiveChatContainer, [{
         key: "componentDidUpdate",
         value: function componentDidUpdate() {
-            // If the user has joined a chat. Make sure that they will not create another session once render is called.
-            if (this.state.joinChat) {
-                console.log("Stop join");
-                this.setState({
-                    joinChat: !this.state.joinChat
-                });
+
+            if (this.state.chatListener) {
+
+                // this.state.chatListener;
+
+                console.log("--componentDidUpdadte", "Logged in");
             }
         }
     }, {
         key: "render",
         value: function render() {
             var _this2 = this;
-
-            if (this.state.joinChat) {
-                console.log("Logged in");
-                this.state.chatRoom.on(this.state.userName + "-convo", function (sessionRelayObj) {
-
-                    console.log("--Relayed--", sessionRelayObj);
-                });
-            }
 
             return _react2.default.createElement(
                 _react.Fragment,
@@ -25831,7 +25854,7 @@ var LiveChatContainer = function (_Component) {
                         case "LiveChatBox":
                             // this.paymentForm = <PaypalForm/>
                             // Send id to create unique rooms per chatbox
-                            returnComponent = _react2.default.createElement(_LiveChatBox2.default, { key: "LiveChatBox-container-" + index, sessionUser: _this2.state.userName, sessionUserTo: null });
+                            returnComponent = _react2.default.createElement(_LiveChatBox2.default, { key: "LiveChatBox-container-" + index, sessionUser: _this2.state.userName, sessionUserTo: _this2.state.userTo, sessionMsg: "", chatListener: _this2.socket });
                             break;
                         default:
                             //  this.paymentForm = null;
@@ -25840,7 +25863,8 @@ var LiveChatContainer = function (_Component) {
                     }
 
                     return returnComponent;
-                })
+                }),
+                this.state.messageRecievedComponent
             );
         }
     }]);
@@ -25887,6 +25911,8 @@ var _LiveChatBox2 = _interopRequireDefault(_LiveChatBox);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
@@ -25903,7 +25929,27 @@ var LiveChatBox = function (_Component) {
     function LiveChatBox(props) {
         _classCallCheck(this, LiveChatBox);
 
+        // sessionMessages = [];
+        // sessionMessages.push(this.props.sessionMsg);
+
         var _this = _possibleConstructorReturn(this, (LiveChatBox.__proto__ || Object.getPrototypeOf(LiveChatBox)).call(this, props));
+
+        _this.initSocketListner = function () {
+            var creator = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : "none";
+
+            console.log("Socket init");
+            _this.socket.on('new-chat-to-' + _this.state.userName, function (sessionRelayObj) {
+
+                console.log("--Relayed in chat Box--", sessionRelayObj, "Creator: ", creator);
+
+                // this.setState({ sessionMessages: [...this.state.sessionMessages, sessionRelayObj.msg] })
+                _this.updateMessages(sessionRelayObj.msg);
+            });
+        };
+
+        _this.updateMessages = function (msg) {
+            _this.setState({ sessionMessages: [].concat(_toConsumableArray(_this.state.sessionMessages), [msg]) });
+        };
 
         _this.userTypeHandler = function (event) {
             var user = event.target.value;
@@ -25932,32 +25978,29 @@ var LiveChatBox = function (_Component) {
 
         _this.clickHandler = function (event) {
             event.preventDefault();
-            // const user = this.state.user;
 
-            // const currentUser = getExistingElement(user, this.state.userList);
+            // const commentObj = { message: this.state.message, user: this.state.user, userTo: this.state.userTo };
+            // console.log("--Click--", commentObj);
 
-            // if(!currentUser){
-            //     let userList = this.state.userList;
-            //     userList.push(user);
+            // this.socket.emit("chat message", commentObj);
 
-            //     this.setState({ userList });
-            // }
+            var sessionObj = { userFrom: _this.state.user, userTo: _this.state.userTo, msg: _this.state.message };
+            console.log("--Click--", sessionObj);
 
-            var commentObj = { message: _this.state.message, user: _this.state.user, userTo: _this.state.userTo };
-            console.log("--Click--", commentObj);
-
-            _this.socket.emit("chat message", commentObj);
+            _this.socket.emit("send message", sessionObj);
         };
+
+        console.log("--Creating Box--", _this.props.sessionUser);
 
         _this.state = {
             message: "",
-            sessionMessages: [],
-            user: "",
-            userTo: "",
+            sessionMessages: [_this.props.sessionMsg],
+            user: _this.props.sessionUser,
+            userTo: _this.props.sessionUserTo,
             userList: []
         };
 
-        _this.socket = (0, _socket2.default)("localhost:3001");
+        _this.socket = _this.props.chatListener;
 
         return _this;
     }
@@ -25965,50 +26008,20 @@ var LiveChatBox = function (_Component) {
     _createClass(LiveChatBox, [{
         key: 'componentDidMount',
         value: function componentDidMount() {
-
-            // Set socket listener here
-            // this.socket = socketIOClient("localhost:4001");
-            // // console.log(this.socket);
-            // let sessionMessages = this.state.sessionMessages;
-            // this.socket.on("relay message", (newMessage) => {
-            //     const userTo = this.state.userTo;
-
-            //     const currentUser = getExistingElement(userTo, this.state.userList);
-
-            //     console.log("--current user--", currentUser);
-
-            //     if (!currentUser) {
-            //         let userList = this.state.userList;
-            //         userList.push(userTo);
-
-            //         this.setState({ userList });
-            //     }
-
-            //     console.log("--relay--", newMessage);
-            //     sessionMessages.push(newMessage.message);
-            //     this.setState({ sessionMessages });
-
-            //     console.log("--state list--", this.state.userList);
-            // });
-
-            if (this.props.sessionUser) {
-                console.log("You recieved a message");
-            } else {
-                console.log("You are sending message");
-            }
+            var type = "Comopnent did mount";
+            this.initSocketListner(type);
         }
     }, {
         key: 'render',
         value: function render() {
-            // console.log("--state list--", this.state.userList);
-
+            console.log("Rendering");
             return _react2.default.createElement(
                 _react.Fragment,
                 null,
                 _react2.default.createElement(
                     'div',
                     { className: '' + _LiveChatBox2.default.boxContainer },
-                    _react2.default.createElement(_MessagePage2.default, { commentTypeHandler: this.commentTypeHandler, userTypeHandler: this.userTypeHandler, clickHandler: this.clickHandler, messageContent: this.state.sessionMessages }),
+                    _react2.default.createElement(_MessagePage2.default, { messageContent: this.state.sessionMessages, boxId: this.state.user + '-' + this.state.userTo }),
                     _react2.default.createElement(_MessageInputs2.default, { commentTypeHandler: this.commentTypeHandler, userTypeHandler: this.userTypeHandler, clickHandler: this.clickHandler })
                 )
             );
@@ -26031,8 +26044,6 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
 var _react = __webpack_require__(2);
 
 var _react2 = _interopRequireDefault(_react);
@@ -26047,38 +26058,23 @@ var _Message2 = _interopRequireDefault(_Message);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
 // import ChatBoxStyle from "./MessagePage.scss";
 
-var MessagePage = function (_Component) {
-    _inherits(MessagePage, _Component);
+function MessagePage(props) {
 
-    function MessagePage(props) {
-        _classCallCheck(this, MessagePage);
-
-        return _possibleConstructorReturn(this, (MessagePage.__proto__ || Object.getPrototypeOf(MessagePage)).call(this, props));
-    }
-
-    _createClass(MessagePage, [{
-        key: "render",
-        value: function render() {
+    return _react2.default.createElement(
+        "ul",
+        { id: "messages" },
+        props.messageContent.map(function (item, index) {
+            // return <MessagePiece key={`message-piece-${index}`} currentMessage={item} />
             return _react2.default.createElement(
-                "ul",
-                { id: "messages" },
-                this.props.messageContent.map(function (item, index) {
-                    return _react2.default.createElement(_Message2.default, { key: "message-piece-" + index, currentMessage: item });
-                })
+                "li",
+                { key: "li-" + props.boxId + "-" + index },
+                item
             );
-        }
-    }]);
-
-    return MessagePage;
-}(_react.Component);
+        })
+    );
+}
 
 exports.default = MessagePage;
 

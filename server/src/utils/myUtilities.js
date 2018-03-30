@@ -13,7 +13,6 @@ let getExistingElement = (elementToFind, arrToSearch) => {
   }
 
 let isUndefined = (varToCheck) => {
-    console.log("--is undefined--")
     return varToCheck == undefined ? true : false;
   }
 

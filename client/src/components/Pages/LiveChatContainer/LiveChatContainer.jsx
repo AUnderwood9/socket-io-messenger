@@ -4,7 +4,7 @@ import socketIOClient from 'socket.io-client';
 // import io from "socket.io"
 import SetUserTo from "../SetUserContainer/SetUserContainer";
 import SetUser from "../LoginPage/LoginPage";
-import { getExistingElement } from "../../../utils/myUtilities";
+import { getExistingElement, isUndefined } from "../../../utils/myUtilities";
 
 class LiveChatContainer extends Component {
     constructor(props) {
@@ -13,13 +13,12 @@ class LiveChatContainer extends Component {
         this.state = {
             userName: "",
             userTo: "",
-            userTolist: [],
-            chatId: "",
+            chatlist: [],
             chatBoxRenders: [
                 "SetUser"
             ],
-            joinChat: false,
-            chatRoom: ""
+            messageRecievedComponent: null,
+            chatListener: null
         }
 
         // Create the main socket
@@ -27,12 +26,12 @@ class LiveChatContainer extends Component {
     }
 
     componentDidUpdate(){
-        // If the user has joined a chat. Make sure that they will not create another session once render is called.
-        if(this.state.joinChat){
-            console.log("Stop join");
-            this.setState({
-                joinChat: !this.state.joinChat
-            })
+
+        if(this.state.chatListener){
+
+            // this.state.chatListener;
+
+            console.log("--componentDidUpdadte", "Logged in");
         }
     }
 
@@ -63,49 +62,63 @@ class LiveChatContainer extends Component {
 
         chatBoxRenders.push("SetUserTo");
 
-        this.socket = socketIOClient("localhost:3001");
-
-        this.socket.emit("join", this.state.userName);
-
         this.setState({
             chatBoxRenders,
-            joinChat: !this.state.joinChat,
-            chatRoom: socketIOClient(`localhost:3001/${this.state.userName}-room`)
-        })
+            chatListener: this.socket.on(`chat-to-${this.state.userName}`, (sessionRelayObj) => {
 
+                console.log("--Relayed--", sessionRelayObj);
+
+                // If a chat for this session hasn't been opened. Open a new one.
+                if(sessionRelayObj.openChat){
+                    // const messageRecievedComponent = <LiveChatBox sessionUser={this.state.userName} sessionUserTo={null} sessionObj={sessionRelayObj}/>
+                    if(isUndefined(getExistingElement(sessionRelayObj.userFrom))){
+                        console.log("--creating new message box--", this.socket);
+                        const messageRecievedComponent = <LiveChatBox sessionUser={this.state.userName} sessionUserTo={sessionRelayObj.userFrom} sessionMsg={sessionRelayObj.msg} chatListener={this.socket} />
+
+                        this.setState({
+                            messageRecievedComponent,
+                            chatList: this.state.chatList ? [...this.state.chatList, sessionRelayObj.userFrom] : [ sessionRelayObj.userFrom ]
+                        })
+                    }
+                } else{
+                    console.log("--Sending pm--")
+                    // socketIOClient.emit(`chat-to-${chatObj.userTo}`, sessionRelayObj);
+                    // socketIOClient.emit("private message", sessionRelayObj)
+                    this.socket.emit("private message", sessionRelayObj)
+                }
+
+                // this.state.chatListener.removeAllListeners(`chat-to-${this.state.userName}`);
+            })
+        })
     }
 
     userToClickHandler = (event) => {
         event.preventDefault();
 
-        const sessionObj = { userName: this.state.userName, userTo: this.state.userTo };
-        console.log("--Click--", sessionObj);
+        // const sessionObj = { userName: this.state.userName, userTo: this.state.userTo };
+        // console.log("--Click--", sessionObj);
 
-        this.socket.emit("chat activation", sessionObj);
+        // this.socket.emit("send message", sessionObj);
+
+        // console.log("--Chat List State--", this.state.chatList);
+        // let chatList = this.state.chatList;
+        // console.log(chatList);
+        // chatList.push(sessionRelayObj.userFrom);
 
         let chatBoxRenders = this.state.chatBoxRenders;
         chatBoxRenders.splice("SetUser", 1);
         chatBoxRenders.push("LiveChatBox");
 
-        this.setState({ chatBoxRenders });
+        this.setState({ chatBoxRenders, chatList: [...this.state.chatlist, this.state.userFrom] });
     }
 
 
 
     render() {
-
-        if(this.state.joinChat){
-            console.log("Logged in");
-            this.state.chatRoom.on(`${this.state.userName}-convo`, (sessionRelayObj) => {
-
-                console.log("--Relayed--", sessionRelayObj);
-            });
-        }
-
         return (
             <Fragment>
                 <h1>Hello</h1>
-
+                
                 {
                     this.state.chatBoxRenders.map((item, index) => {
                         let returnComponent = null;
@@ -123,7 +136,7 @@ class LiveChatContainer extends Component {
                             case "LiveChatBox":
                                 // this.paymentForm = <PaypalForm/>
                                 // Send id to create unique rooms per chatbox
-                                returnComponent = <LiveChatBox key={`LiveChatBox-container-${index}`} sessionUser={this.state.userName} sessionUserTo={null}/>;
+                                returnComponent = <LiveChatBox key={`LiveChatBox-container-${index}`} sessionUser={this.state.userName} sessionUserTo={this.state.userTo} sessionMsg={""} chatListener={this.socket}/>;
                                 break;
                             default:
                                 //  this.paymentForm = null;
@@ -134,6 +147,8 @@ class LiveChatContainer extends Component {
                         return returnComponent;
                     })
                 }
+
+                { this.state.messageRecievedComponent }
             </Fragment>
         );
     }
